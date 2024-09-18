@@ -45,46 +45,61 @@ def pil_to_binary_mask(pil_image, threshold=0):
 base_path = 'yisol/IDM-VTON'
 example_path = os.path.join(os.path.dirname(__file__), 'example')
 
+print("DEBUG: Loading Unet2dConditionModel")
 unet = UNet2DConditionModel.from_pretrained(
     base_path,
     subfolder="unet",
     torch_dtype=torch.float16,
 )
 unet.requires_grad_(False)
+
+print("DEBUG: Loading AutoTokenizer")
 tokenizer_one = AutoTokenizer.from_pretrained(
     base_path,
     subfolder="tokenizer",
     revision=None,
     use_fast=False,
 )
+
+print("DEBUG: Loading AutoTokenizer 2")
 tokenizer_two = AutoTokenizer.from_pretrained(
     base_path,
     subfolder="tokenizer_2",
     revision=None,
     use_fast=False,
 )
+
+print("DEBUG: Loading noise_scheduler")
 noise_scheduler = DDPMScheduler.from_pretrained(base_path, subfolder="scheduler")
 
+print("DEBUG: Loading text_encoder_one")
 text_encoder_one = CLIPTextModel.from_pretrained(
     base_path,
     subfolder="text_encoder",
     torch_dtype=torch.float16,
 )
+
+print("DEBUG: Loading text_encoder_two")
 text_encoder_two = CLIPTextModelWithProjection.from_pretrained(
     base_path,
     subfolder="text_encoder_2",
     torch_dtype=torch.float16,
 )
+
+print("DEBUG: Loading image_encoder")
 image_encoder = CLIPVisionModelWithProjection.from_pretrained(
     base_path,
     subfolder="image_encoder",
     torch_dtype=torch.float16,
     )
+
+print("DEBUG: Loading AutoencoderKL")
 vae = AutoencoderKL.from_pretrained(base_path,
                                     subfolder="vae",
                                     torch_dtype=torch.float16,
 )
 
+print("DEBUG: Loading UNet_Encoder")
 # "stabilityai/stable-diffusion-xl-base-1.0",
 UNet_Encoder = UNet2DConditionModel_ref.from_pretrained(
     base_path,
@@ -101,6 +116,8 @@ vae.requires_grad_(False)
 unet.requires_grad_(False)
 text_encoder_one.requires_grad_(False)
 text_encoder_two.requires_grad_(False)
+
+print("DEBUG: composing tensor_transform ")
 tensor_transfrom = transforms.Compose(
             [
                 transforms.ToTensor(),
@@ -108,6 +125,8 @@ tensor_transfrom = transforms.Compose(
             ]
     )
 
+
+print("DEBUG: instantiating the pipe")
 pipe = TryonPipeline.from_pretrained(
         base_path,
         unet=unet,
@@ -309,5 +328,5 @@ with image_blocks as demo:
             
 
 
-image_blocks.launch()
+image_blocks.launch(share=True)
 
